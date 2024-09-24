@@ -4,7 +4,12 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.support.events import EventFiringWebDriver
-from utils import setup_logging, EventListener
+from browsermobproxy import Server
+from utils import setup_logging, EventListener, log_http_requests
+
+# BROWSERMOB_PROXY_PATH = ("C:\\Users\\favy\\Documents\\work\\browsermob-proxy\\browsermob-dist\\src"
+#                          "\\main\\scripts\\browsermob-proxy.bat")
+
 
 
 def pytest_addoption(parser):
@@ -21,7 +26,8 @@ def pytest_addoption(parser):
 
 def pytest_generate_tests(metafunc):
     """
-    Parametrizes the test suite to run tests across different browsers as per the command-line option.
+    Parametrizes the test suite to run tests across different browsers as per the
+    command-line option.
 
     :param metafunc: The metafunc object representing the current test function.
     """
@@ -38,6 +44,8 @@ def open_driver(browser, proxy=None):
     Opens the browser driver based on the specified browser.
 
     :param browser: The browser type to open (chrome or firefox).
+    :param proxy: The proxy to use for intercepting HTTP requests (optional).
+    If None, no proxy is used.
     :return: WebDriver instance.
     :raises ValueError: If an unsupported browser type is passed.
     """
@@ -45,17 +53,17 @@ def open_driver(browser, proxy=None):
         if browser == "firefox":
             options = FirefoxOptions()
             options.add_argument("--headless")
-            options.add_argument("--start-maximized")
-            driver = webdriver.Firefox(options=options)
+            # options.add_argument("--start-maximized")
             if proxy:
                 options.add_argument(f"--proxy-server={proxy.proxy}")
+            driver = webdriver.Firefox(options=options)
         elif browser == "chrome":
             options = ChromeOptions()
             options.add_argument("--headless")
-            options.add_argument("--start-maximized")
-            driver = webdriver.Chrome(options=options)
+            # options.add_argument("--start-maximized")
             if proxy:
                 options.add_argument(f"--proxy-server={proxy.proxy}")
+            driver = webdriver.Chrome(options=options)
         else:
             raise ValueError(f"Unsupported browser: {browser}")
 
@@ -74,6 +82,12 @@ def driver(request, browser):
     :param browser: Browser type passed as a parameter (chrome or firefox).
     :yield: EventFiringWebDriver instance.
     """
+
+    # Set up proxy if necessary
+    # server = Server(BROWSERMOB_PROXY_PATH)
+    # server.start()
+    # proxy = server.create_proxy()
+
     logger, test_run_dir = setup_logging(request.module.__file__)
     logger.info(f"Starting test module: {request.module.__name__} with {browser} browser")
 
@@ -88,20 +102,27 @@ def driver(request, browser):
 
     yield event_driver
 
+    # Capture final HTTP requests and stop proxy
+    # log_http_requests(proxy, logger)  # This function should log the captured requests
+    # event_driver.quit()
+    # server.stop()  # Stop the proxy server
+
     logger.info(f"Finishing test module: {request.module.__name__} with {browser} browser")
+
     event_driver.quit()
 
 
 @pytest.fixture(autouse=True)
-def log_test_status(request):
+def log_test_status(driver, request):
     """
     Fixture that logs the start and end of each test automatically.
 
+    :param driver: WebDriver instance initialized by the fixture.
     :param request: Pytest request object to access test information.
     """
     driver = request.node.funcargs.get('driver')
-    if hasattr(driver, '_listener'):
-        logger = driver._listener.logger
+    if hasattr(driver, 'listener'):
+        logger = driver.listener.logger()
         logger.info(f"Starting test: {request.node.name}")
         yield
         logger.info(f"Finishing test: {request.node.name}")

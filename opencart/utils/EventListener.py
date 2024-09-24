@@ -15,10 +15,12 @@ class EventListener(AbstractEventListener):
     def after_navigate_to(self, url, driver):
         self.logger.info(f"Navigated to {url}")
         if self.proxy:
-            # Log HTTP requests after navigation
             self.logger.info(f"HTTP requests: {self.proxy.har}")
 
     def on_exception(self, exception, driver):
         self.logger.error(f"Exception occurred: {exception}")
         # Save a screenshot when an exception occurs
         driver.save_screenshot(self.screenshot_dir + "/exception_screenshot.png")
+
+    def get_logger(self):
+        return self.logger

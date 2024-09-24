@@ -14,12 +14,15 @@ Ensure that all dependencies from the requirements.txt file are installed.
 How to Run the Tests
 
 Clone the repository:
+
 git clone [<repository-url>](https://github.com/box-of-favy/opencart)
 
 Navigate to the project folder:
+
 cd <project-folder>
 
 Start the Docker container:
+
 docker-compose up -d
 
 Run the tests using the following command:

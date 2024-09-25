@@ -1,4 +1,3 @@
-
 from .CartPageLocators import CartPageLocators
 from .CataloguePageLocators import CataloguePageLocators
 from .MainPageLocators import MainPageLocators

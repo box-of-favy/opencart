@@ -44,11 +44,13 @@ class CategoryPage:
         """
         Fill in the category information form.
 
-        :param category_data: Dictionary containing the category details (name, description, meta tags).
+        :param category_data: Dictionary containing the category details
+        (name, description, meta tags).
         :raises NoSuchElementException: If any form element is not found.
         """
         try:
-            self.driver.find_element(*CategoryPageLocators.CATEGORY_NAME_INPUT).send_keys(category_data["name"])
+            (self.driver.find_element(*CategoryPageLocators.CATEGORY_NAME_INPUT).send_keys
+             (category_data["name"]))
 
             description_script = """
             var editor = $('#input-description1').data('summernote');
@@ -62,9 +64,12 @@ class CategoryPage:
             """
             self.driver.execute_script(description_script, category_data["description"])
 
-            self.driver.find_element(*CategoryPageLocators.META_TAG_TITLE_INPUT).send_keys(category_data["meta_tag_title"])
-            self.driver.find_element(*CategoryPageLocators.META_TAG_DESCRIPTION_TEXTAREA).send_keys(category_data["meta_tag_description"])
-            self.driver.find_element(*CategoryPageLocators.META_TAG_KEYWORDS_TEXTAREA).send_keys(category_data["meta_tag_keywords"])
+            (self.driver.find_element(*CategoryPageLocators.META_TAG_TITLE_INPUT).send_keys
+             (category_data["meta_tag_title"]))
+            (self.driver.find_element(*CategoryPageLocators.META_TAG_DESCRIPTION_TEXTAREA).send_keys
+             (category_data["meta_tag_description"]))
+            (self.driver.find_element(*CategoryPageLocators.META_TAG_KEYWORDS_TEXTAREA).send_keys
+             (category_data["meta_tag_keywords"]))
 
         except NoSuchElementException as e:
             raise NoSuchElementException(f"Failed to fill category info, element not found: {e}")
@@ -81,27 +86,20 @@ class CategoryPage:
         except NoSuchElementException as e:
             raise NoSuchElementException(f"Save button not found: {e}")
 
-    def is_success_message_present(self):
+    def save_category_and_verify(self):
         """
-        Check if the success message is present on the page after an action.
+        Save the category and verify the success message in one step.
 
-        :return: True if the success message is found, False otherwise.
-        :raises NoSuchElementException: If the success message element is not found.
+        :return: True if the success message is found after saving the category, False otherwise.
         """
         try:
+            # Save the category
+            self.save_category()
+            # Verify if the success message is present
             success_message = self.driver.find_element(*CategoryPageLocators.SUCCESS_MESSAGE)
             return "Success: You have modified categories!" in success_message.text
         except NoSuchElementException:
             return False
-
-    def save_category_and_verify(self):
-        """
-        Save the category and verify the success message.
-
-        :return: True if the category is saved successfully, False otherwise.
-        """
-        self.save_category()
-        return self.is_success_message_present()
 
     def select_category_by_name(self, category_name):
         """
@@ -134,8 +132,13 @@ class CategoryPage:
             delete_button = self.driver.find_element(*CategoryPageLocators.DELETE_BUTTON)
             delete_button.click()
 
-            self.driver.switch_to.alert.accept()
-            return self.is_success_message_present()
+            # Handle the alert that appears after clicking the delete button
+            alert = self.driver.switch_to.alert
+            alert.accept()  # Confirm the deletion by accepting the alert
+
+            # Verify if the success message for deletion is present
+            success_message = self.driver.find_element(*CategoryPageLocators.SUCCESS_MESSAGE)
+            return "Success: You have modified categories!" in success_message.text
         except NoSuchElementException as e:
             raise NoSuchElementException(f"Delete button or alert not found: {e}")
 

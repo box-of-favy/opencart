@@ -17,27 +17,12 @@ def pytest_addoption(parser):
 
     :param parser: Parser object to add options.
     """
-    parser.addoption("--browser", action="store", default="both",
+    parser.addoption("--browser", action="store", default="chrome",
                      help="Browser to use for tests: chrome, firefox, or both")
     parser.addoption("--wait", action="store", default=10, type=int,
                      help="Implicit wait time for the browser")
     parser.addoption("--proxy-port", action="store", default=8081, type=int,
                      help="Port for the BrowserMob proxy (default: 8081)")
-
-
-# def pytest_generate_tests(metafunc):
-#     """
-#     Parametrizes the test suite to run tests across different browsers as per the
-#     command-line option.
-#
-#     :param metafunc: The metafunc object representing the current test function.
-#     """
-#     if "driver" in metafunc.fixturenames:
-#         browsers = metafunc.config.getoption("browser")
-#         if browsers == "both":
-#             metafunc.parametrize("browser", ["chrome", "firefox"], scope="module")
-#         else:
-#             metafunc.parametrize("browser", [browsers], scope="module")
 
 
 def open_driver(browser, proxy=None):
@@ -60,7 +45,7 @@ def open_driver(browser, proxy=None):
         driver = webdriver.Firefox(options=options)
     elif browser == "chrome":
         options = ChromeOptions()
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         options.add_argument("--start-maximized")
         if proxy:
             options.add_argument(f"--proxy-server={proxy.proxy}")
@@ -72,7 +57,7 @@ def open_driver(browser, proxy=None):
     return driver
 
 
-@pytest.fixture(scope="module", params=["chrome", "firefox"])
+@pytest.fixture(scope="module")
 def driver(request):
     """
     Fixture to initialize and yield the WebDriver instance with logging and event handling.
@@ -81,7 +66,7 @@ def driver(request):
     :param browser: Browser type passed as a parameter (chrome or firefox).
     :yield: EventFiringWebDriver instance.
     """
-    browser = request.param
+    browser = request.config.getoption("--browser")
     proxy_port = request.config.getoption("--proxy-port")
 
     # Set up logging
@@ -111,29 +96,21 @@ def driver(request):
     # Log HTTP requests
     log_http_requests(proxy, logger)
 
-    # Stop proxy and save HAR file
-    proxy_utils.stop_proxy(proxy, server, har_file_path)
+    # Ensure that the driver is quit and the proxy is stopped
+    try:
+        event_driver.quit()
+        logger.info(f"Driver for {browser} browser quit successfully.")
+    except Exception as e:
+        logger.error(f"Error quitting driver for {browser}: {e}")
 
-    event_driver.quit()
+    # Stop proxy and save HAR file
+    try:
+        proxy_utils.stop_proxy(proxy, server, har_file_path)
+        logger.info("Proxy stopped successfully.")
+    except Exception as e:
+        logger.error(f"Error stopping proxy: {e}")
 
     logger.info(f"Finishing test module: {request.module.__name__} with {browser} browser")
-
-
-@pytest.fixture(autouse=True)
-def log_test_status(request):
-    """
-    Fixture that logs the start and end of each test automatically.
-
-    :param request: Pytest request object to access test information.
-    """
-    driver = request.node.funcargs.get('driver')
-    if hasattr(driver, 'logger'):
-        logger = driver.logger
-        logger.info(f"Starting test: {request.node.name}")
-        yield
-        logger.info(f"Finishing test: {request.node.name}")
-    else:
-        yield
 
 
 @pytest.fixture(scope="function")

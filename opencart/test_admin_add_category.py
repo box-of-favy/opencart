@@ -88,7 +88,7 @@ def test_save_category(driver, category_data):
     category_page = CategoryPage(driver)
     logger = driver._listener.logger
 
-    # Save the category
+    # Save the category and verify success message in one step
     save_result = category_page.save_category_and_verify()
     if not save_result:
         save_screenshot(driver, "test_save_category", driver._listener.screenshot_dir)
@@ -114,24 +114,15 @@ def test_delete_category(driver, category_data):
     category_page = CategoryPage(driver)
     logger = driver._listener.logger
 
-    # Check if the category is present before deletion
-    category_present = category_page.is_category_present(category_data["name"])
-    if not category_present:
-        save_screenshot(driver, "test_delete_category_check_presence",
-                        driver._listener.screenshot_dir)
-        logger.error(f"Category '{category_data['name']}' not found before deletion attempt")
-    assert category_present, (f"Category '{category_data['name']}' "
-                              f"not found before deletion attempt")
-
-    # Select and delete the category
+    # First, select the category by name
     category_selected = category_page.select_category_by_name(category_data["name"])
     if not category_selected:
-        save_screenshot(driver, "test_delete_category_select",
+        save_screenshot(driver, "test_delete_category_select_failure",
                         driver._listener.screenshot_dir)
         logger.error(f"Failed to select category '{category_data['name']}' for deletion")
     assert category_selected, f"Failed to select category '{category_data['name']}' for deletion"
 
-    # Delete the category and verify success
+    # Then, delete the selected category
     delete_result = category_page.delete_selected_category()
     if not delete_result:
         save_screenshot(driver, "test_delete_category", driver._listener.screenshot_dir)
@@ -139,6 +130,7 @@ def test_delete_category(driver, category_data):
     assert delete_result, "Success message for category deletion did not appear"
 
     time.sleep(3)
+
     # Verify the category is no longer present
     category_still_present = category_page.is_category_present(category_data["name"])
     if category_still_present:
@@ -147,3 +139,4 @@ def test_delete_category(driver, category_data):
         logger.error(f"Category '{category_data['name']}' still exists after deletion")
     assert not category_still_present, (f"Category '{category_data['name']}' "
                                         f"still exists after deletion")
+

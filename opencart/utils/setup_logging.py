@@ -21,7 +21,12 @@ def setup_logging(test_file_name):
     :return: A tuple of the logger and the path to the test log directory.
     :raises OSError: If the log directory cannot be created.
     """
+
     test_name = os.path.splitext(os.path.basename(test_file_name))[0]
+    logger = logging.getLogger(test_name)
+
+    # Set logger level
+    logger.setLevel(logging.INFO)
 
     # Create a directory for the test's logs
     test_log_dir = os.path.join(session_folder, test_name)
@@ -32,8 +37,6 @@ def setup_logging(test_file_name):
 
     log_file_name = os.path.join(test_log_dir, f"{test_name}.log")
 
-    logger = logging.getLogger(test_name)
-    logger.setLevel(logging.ERROR)
 
     # Remove any existing handlers to avoid duplication
     for handler in logger.handlers[:]:
@@ -41,7 +44,7 @@ def setup_logging(test_file_name):
 
     # Add a file handler for the test-specific log
     file_handler = logging.FileHandler(log_file_name)
-    file_handler.setLevel(logging.ERROR)
+    file_handler.setLevel(logging.INFO)
 
     # Format log messages
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

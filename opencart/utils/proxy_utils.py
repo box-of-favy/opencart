@@ -16,9 +16,13 @@ def start_proxy_session(session_dir, port):
     :param port: Port for BrowserMob Proxy to listen on (default 8081).
     :return: Proxy instance.
     """
-    log_file = os.path.join(session_dir, "server.log")
+    log_file = os.path.abspath(os.path.join(session_dir, "bmp.log"))
 
-    server = Server(BROWSERMOB_PROXY_PATH, options={"port": port, "trustAllServers": "true"})
+    server = Server(BROWSERMOB_PROXY_PATH, options={
+        "port": port,
+        "log_path": log_file,
+        # "log_file": log_file
+    })
     server.start()  # Start proxy on custom port
     proxy = server.create_proxy()  # Create the proxy instance
 

@@ -61,14 +61,21 @@ def setup_logging_session():
     logger, test_run_dir = setup_logging("test_session")
     return logger, test_run_dir
 
+#At current time does not work properly.
 @pytest.fixture(scope="session")
 def proxy_session(setup_logging_session, request):
-    logger, test_run_dir = setup_logging_session
-    port = request.config.getoption("--proxy-port")  # Retrieve the port from the parser option
-    proxy, server, har_file_path = proxy_utils.start_proxy_session(test_run_dir, port=port)
-    yield proxy
-    proxy_utils.stop_proxy(proxy, server, har_file_path)
-    logger.info("Proxy was stopped.")
+    # logger, test_run_dir = setup_logging_session
+    # port = request.config.getoption("--proxy-port")
+    # proxy, server, har_file_path = proxy_utils.start_proxy_session(test_run_dir, port=port)
+    #
+    # yield proxy
+    #
+    # try:
+    #     proxy_utils.stop_proxy(proxy, server, har_file_path)
+    #     logger.info("Proxy was stopped.")
+    # except Exception as e:
+    #     logger.error(f"Error stopping proxy: {e}")
+    yield None
 
 @pytest.fixture(scope="module")
 def driver(request, proxy_session, setup_logging_session):
